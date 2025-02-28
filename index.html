@@ -29,7 +29,7 @@
             left: 50%;
             transform: translate(-50%, -50%);
             width: 100%;
-            max-width: 400px;
+            max-width: 800px;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -44,29 +44,25 @@
             animation: slideIn 0.8s ease-in-out;
         }
 
-        .form-container {
-            position: relative;
-            width: 100%;
-        }
-
-        .login-container, .register-container, .forgot-container {
+        .login-container, .register-container, .forgot-container, .ai-container {
             background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(20px); /* 增強模糊效果 */
+            backdrop-filter: blur(20px);
             padding: 24px;
             border-radius: 12px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
             width: 100%;
             display: none;
             flex-direction: column;
             align-items: center;
-            border: 1px solid rgba(255, 255, 255, 0.2);
             opacity: 0;
             position: relative;
+            transition: opacity 0.3s ease-in-out;
         }
 
-        .active {
+        .login-container.active, .register-container.active, .forgot-container.active, .ai-container.active {
             display: flex;
-            animation: fadeIn 0.3s ease-in forwards;
+            opacity: 1;
         }
 
         .progress-container {
@@ -187,6 +183,110 @@
             animation: spin 1s linear infinite;
         }
 
+        .form-content {
+            width: 100%;
+        }
+
+        .hide-content .form-content {
+            display: none;
+        }
+
+        .ai-container {
+            height: 80vh;
+            max-width: 800px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            width: 100%;
+        }
+
+        .welcome {
+            color: #1f1f1f;
+            font-size: 24px;
+            font-weight: 500;
+        }
+
+        .logout-button {
+            background: #6750a4;
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 50px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        .chat-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            width: 100%;
+        }
+
+        .chat-history {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+        }
+
+        .message {
+            margin-bottom: 16px;
+            padding: 12px;
+            border-radius: 8px;
+            max-width: 70%;
+        }
+
+        .user-message {
+            background: #6750a4;
+            color: white;
+            align-self: flex-end;
+            margin-left: auto;
+            animation: bounceIn 0.5s ease-out;
+        }
+
+        .ai-message {
+            background: rgba(255, 255, 255, 0.2);
+            color: #1f1f1f;
+            align-self: flex-start;
+            animation: slideInFromLeft 0.5s ease-out;
+        }
+
+        .input-container {
+            display: flex;
+            align-items: center;
+            padding: 16px;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            width: 100%;
+        }
+
+        .icon-button {
+            width: 40px;
+            height: 40px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.3s ease;
+        }
+
+        .icon-button:hover {
+            transform: scale(1.1);
+        }
+
+        .voice-icon, .send-icon {
+            width: 24px;
+            height: 24px;
+            fill: #6750a4;
+        }
+
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
@@ -214,124 +314,122 @@
             100% { width: 0; }
         }
 
-        .particles {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            top: 0;
-            left: 0;
-            pointer-events: none;
+        @keyframes bounceIn {
+            0% { opacity: 0; transform: scale(0.3); }
+            50% { opacity: 1; transform: scale(1.05); }
+            100% { transform: scale(1); }
         }
 
-        .particle {
-            position: absolute;
-            background: rgba(103, 80, 164, 0.5);
-            border-radius: 50%;
-            animation: float 6s infinite ease-in-out;
-        }
-
-        @keyframes float {
-            0% { transform: translateY(0); opacity: 0.8; }
-            50% { transform: translateY(-100vh); opacity: 0.2; }
-            100% { transform: translateY(0); opacity: 0.8; }
-        }
-
-        .form-content {
-            width: 100%;
-        }
-
-        .hide-content .form-content {
-            display: none;
+        @keyframes slideInFromLeft {
+            0% { opacity: 0; transform: translateX(-50px); }
+            100% { opacity: 1; transform: translateX(0); }
         }
     </style>
 </head>
 <body>
-    <div class="particles" id="particles"></div>
     <div class="container">
         <h1 class="app-title">WC Stupid AI</h1>
-        <div class="form-container">
-            <!-- 登入表單 -->
-            <div class="login-container active" id="loginContainer">
-                <div class="progress-container" id="loginProgress">
-                    <div class="progress-bar"><div class="progress"></div></div>
-                </div>
-                <div class="form-content">
-                    <form id="loginForm">
-                        <div class="input-field">
-                            <input type="email" id="loginUsername" required placeholder=" ">
-                            <label for="loginUsername">電子郵件</label>
-                        </div>
-                        <div class="input-field">
-                            <input type="password" id="loginPassword" required placeholder=" ">
-                            <label for="loginPassword">密碼</label>
-                        </div>
-                        <button type="submit" class="filled-button">登入</button>
-                        <div class="error-message" id="loginError"></div>
-                        <div class="forgot-password" id="toForgot">忘記密碼？</div>
-                    </form>
-                    <div class="toggle-link" id="toRegister">還沒有帳號？註冊</div>
-                </div>
-                <div class="circular-progress-container" id="loginCircular">
-                    <div class="circular-progress"></div>
-                </div>
+        <!-- 登入表單 -->
+        <div class="login-container active" id="loginContainer">
+            <div class="progress-container" id="loginProgress">
+                <div class="progress-bar"><div class="progress"></div></div>
             </div>
-
-            <!-- 註冊表單 -->
-            <div class="register-container" id="registerContainer">
-                <div class="progress-container" id="registerProgress">
-                    <div class="progress-bar"><div class="progress"></div></div>
-                </div>
-                <div class="form-content">
-                    <form id="registerForm">
-                        <div class="input-field">
-                            <input type="text" id="registerUsername" required placeholder=" ">
-                            <label for="registerUsername">使用者名稱</label>
-                        </div>
-                        <div class="input-field">
-                            <input type="email" id="registerEmail" required placeholder=" ">
-                            <label for="registerEmail">電子郵件</label>
-                        </div>
-                        <div class="input-field">
-                            <input type="password" id="registerPassword" required placeholder=" ">
-                            <label for="registerPassword">密碼</label>
-                        </div>
-                        <button type="submit" class="filled-button">註冊</button>
-                        <div class="error-message" id="registerError"></div>
-                    </form>
-                    <div class="toggle-link" id="toLogin">已有帳號？登入</div>
-                </div>
-                <div class="circular-progress-container" id="registerCircular">
-                    <div class="circular-progress"></div>
-                </div>
+            <div class="form-content">
+                <form id="loginForm">
+                    <div class="input-field">
+                        <input type="email" id="loginUsername" required placeholder=" ">
+                        <label for="loginUsername">電子郵件</label>
+                    </div>
+                    <div class="input-field">
+                        <input type="password" id="loginPassword" required placeholder=" ">
+                        <label for="loginPassword">密碼</label>
+                    </div>
+                    <button type="submit" class="filled-button">登入</button>
+                    <div class="error-message" id="loginError"></div>
+                    <div class="forgot-password" id="toForgot">忘記密碼？</div>
+                </form>
+                <div class="toggle-link" id="toRegister">還沒有帳號？註冊</div>
             </div>
+            <div class="circular-progress-container" id="loginCircular">
+                <div class="circular-progress"></div>
+            </div>
+        </div>
 
-            <!-- 忘記密碼表單 -->
-            <div class="forgot-container" id="forgotContainer">
-                <div class="progress-container" id="forgotProgress">
-                    <div class="progress-bar"><div class="progress"></div></div>
-                </div>
-                <div class="form-content">
-                    <form id="forgotForm">
-                        <div class="input-field">
-                            <input type="email" id="forgotEmail" required placeholder=" ">
-                            <label for="forgotEmail">電子郵件</label>
-                        </div>
-                        <button type="submit" class="filled-button">發送重置郵件</button>
-                        <div class="error-message" id="forgotError"></div>
-                    </form>
-                    <div class="toggle-link" id="backToLogin">返回登入</div>
-                </div>
-                <div class="circular-progress-container" id="forgotCircular">
-                    <div class="circular-progress"></div>
+        <!-- 註冊表單 -->
+        <div class="register-container" id="registerContainer">
+            <div class="progress-container" id="registerProgress">
+                <div class="progress-bar"><div class="progress"></div></div>
+            </div>
+            <div class="form-content">
+                <form id="registerForm">
+                    <div class="input-field">
+                        <input type="text" id="registerUsername" required placeholder=" ">
+                        <label for="registerUsername">使用者名稱</label>
+                    </div>
+                    <div class="input-field">
+                        <input type="email" id="registerEmail" required placeholder=" ">
+                        <label for="registerEmail">電子郵件</label>
+                    </div>
+                    <div class="input-field">
+                        <input type="password" id="registerPassword" required placeholder=" ">
+                        <label for="registerPassword">密碼</label>
+                    </div>
+                    <button type="submit" class="filled-button">註冊</button>
+                    <div class="error-message" id="registerError"></div>
+                </form>
+                <div class="toggle-link" id="toLogin">已有帳號？登入</div>
+            </div>
+            <div class="circular-progress-container" id="registerCircular">
+                <div class="circular-progress"></div>
+            </div>
+        </div>
+
+        <!-- 忘記密碼表單 -->
+        <div class="forgot-container" id="forgotContainer">
+            <div class="progress-container" id="forgotProgress">
+                <div class="progress-bar"><div class="progress"></div></div>
+            </div>
+            <div class="form-content">
+                <form id="forgotForm">
+                    <div class="input-field">
+                        <input type="email" id="forgotEmail" required placeholder=" ">
+                        <label for="forgotEmail">電子郵件</label>
+                    </div>
+                    <button type="submit" class="filled-button">發送重置郵件</button>
+                    <div class="error-message" id="forgotError"></div>
+                </form>
+                <div class="toggle-link" id="backToLogin">返回登入</div>
+            </div>
+            <div class="circular-progress-container" id="forgotCircular">
+                <div class="circular-progress"></div>
+            </div>
+        </div>
+
+        <!-- AI 頁面 -->
+        <div class="ai-container" id="aiContainer">
+            <div class="header">
+                <h1 class="welcome" id="welcomeMessage">歡迎回來</h1>
+                <button class="logout-button" id="logout">登出</button>
+            </div>
+            <div class="chat-container">
+                <div class="chat-history" id="chatHistory"></div>
+                <div class="input-container">
+                    <div class="input-field">
+                        <input type="text" class="chat-input" id="chatInput" required placeholder=" ">
+                        <label for="chatInput">輸入訊息</label>
+                    </div>
+                    <button class="icon-button" id="actionButton">
+                        <svg class="voice-icon" id="voiceIcon" viewBox="0 0 24 24"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm-1-9c0-.55.45-1 1-1s1 .45 1 1v6c0 .55-.45 1-1 1s-1-.45-1-1V5zm6.1 6c0 3-2.54 5.1-5.1 5.1S6.9 14 6.9 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.49 6-3.31 6-6.72h-1.9z"/></svg>
+                        <svg class="send-icon" id="sendIcon" style="display: none;" viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+                    </button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Firebase SDK -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, updateProfile, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
         import { getAnalytics } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-analytics.js";
 
         const firebaseConfig = {
@@ -359,19 +457,40 @@
             const loginContainer = document.getElementById('loginContainer');
             const registerContainer = document.getElementById('registerContainer');
             const forgotContainer = document.getElementById('forgotContainer');
+            const aiContainer = document.getElementById('aiContainer');
             const loginProgress = document.getElementById('loginProgress');
             const registerProgress = document.getElementById('registerProgress');
             const forgotProgress = document.getElementById('forgotProgress');
             const loginCircular = document.getElementById('loginCircular');
             const registerCircular = document.getElementById('registerCircular');
             const forgotCircular = document.getElementById('forgotCircular');
+            const chatInput = document.getElementById('chatInput');
+            const actionButton = document.getElementById('actionButton');
+            const voiceIcon = document.getElementById('voiceIcon');
+            const sendIcon = document.getElementById('sendIcon');
+            const chatHistory = document.getElementById('chatHistory');
+            const logoutButton = document.getElementById('logout');
 
             function showPage(showContainer) {
                 loginContainer.classList.remove('active', 'hide-content');
                 registerContainer.classList.remove('active', 'hide-content');
                 forgotContainer.classList.remove('active', 'hide-content');
+                aiContainer.classList.remove('active');
                 showContainer.classList.add('active');
             }
+
+            // 檢查登入狀態並載入聊天記錄
+            onAuthStateChanged(auth, (user) => {
+                if (user) {
+                    const username = user.displayName || '用戶';
+                    document.getElementById('welcomeMessage').textContent = `歡迎回來，${username}`;
+                    showPage(aiContainer);
+                    loadChatHistory(user.uid);
+                } else {
+                    showPage(loginContainer);
+                    chatHistory.innerHTML = '';
+                }
+            });
 
             loginForm.addEventListener('submit', (e) => {
                 e.preventDefault();
@@ -384,7 +503,7 @@
                     .then((userCredential) => {
                         loginProgress.style.display = 'none';
                         showSuccess(loginContainer, loginCircular, () => {
-                            window.location.href = 'dashboard.html';
+                            showPage(aiContainer);
                         });
                         errorMsg.style.display = 'none';
                     })
@@ -399,14 +518,21 @@
                 e.preventDefault();
                 const email = document.getElementById('registerEmail').value;
                 const password = document.getElementById('registerPassword').value;
+                const username = document.getElementById('registerUsername').value;
                 const errorMsg = document.getElementById('registerError');
                 registerProgress.style.display = 'block';
 
                 createUserWithEmailAndPassword(auth, email, password)
                     .then((userCredential) => {
-                        registerProgress.style.display = 'none';
-                        showSuccess(registerContainer, registerCircular);
-                        errorMsg.style.display = 'none';
+                        return updateProfile(userCredential.user, {
+                            displayName: username
+                        }).then(() => {
+                            registerProgress.style.display = 'none';
+                            showSuccess(registerContainer, registerCircular, () => {
+                                showPage(loginContainer);
+                            });
+                            errorMsg.style.display = 'none';
+                        });
                     })
                     .catch((error) => {
                         registerProgress.style.display = 'none';
@@ -461,6 +587,148 @@
                 showPage(loginContainer);
                 document.getElementById('forgotError').style.display = 'none';
             });
+
+            logoutButton.addEventListener('click', () => {
+                signOut(auth).then(() => {
+                    showPage(loginContainer);
+                    chatHistory.innerHTML = '';
+                }).catch((error) => {
+                    alert('登出失敗：' + error.message);
+                });
+            });
+
+            // 動態切換語音/發送圖標
+            chatInput.addEventListener('input', () => {
+                if (chatInput.value.trim() === '') {
+                    voiceIcon.style.display = 'block';
+                    sendIcon.style.display = 'none';
+                } else {
+                    voiceIcon.style.display = 'none';
+                    sendIcon.style.display = 'block';
+                }
+            });
+
+            // 語音輸入功能
+            const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+            recognition.lang = 'zh-TW';
+            recognition.interimResults = false;
+            recognition.maxAlternatives = 1;
+
+            actionButton.addEventListener('click', () => {
+                if (chatInput.value.trim() === '') {
+                    recognition.start();
+                } else {
+                    sendMessage();
+                }
+            });
+
+            recognition.onresult = (event) => {
+                const transcript = event.results[0][0].transcript;
+                chatInput.value = transcript;
+                voiceIcon.style.display = 'none';
+                sendIcon.style.display = 'block';
+                sendMessage();
+            };
+
+            recognition.onerror = (event) => {
+                console.error('語音辨識錯誤：', event.error);
+            };
+
+            chatInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter' && chatInput.value.trim() !== '') sendMessage();
+            });
+
+            // 載入聊天記錄
+            function loadChatHistory(uid) {
+                const history = JSON.parse(localStorage.getItem(`chat_${uid}`)) || [];
+                chatHistory.innerHTML = '';
+                history.forEach(msg => {
+                    const messageDiv = document.createElement('div');
+                    messageDiv.className = `message ${msg.role === 'user' ? 'user-message' : 'ai-message'}`;
+                    messageDiv.textContent = msg.content;
+                    chatHistory.appendChild(messageDiv);
+                });
+                chatHistory.scrollTop = chatHistory.scrollHeight;
+            }
+
+            // 儲存聊天記錄
+            function saveChatHistory(uid, message) {
+                const history = JSON.parse(localStorage.getItem(`chat_${uid}`)) || [];
+                history.push(message);
+                localStorage.setItem(`chat_${uid}`, JSON.stringify(history));
+            }
+
+            // AI 聊天功能（模擬回應，需後端代理）
+            async function sendMessage() {
+                const user = auth.currentUser;
+                if (!user) {
+                    alert('請先登入');
+                    showPage(loginContainer);
+                    return;
+                }
+
+                const message = chatInput.value.trim();
+                if (!message) return;
+
+                const userMessage = { role: 'user', content: message };
+                const userMessageDiv = document.createElement('div');
+                userMessageDiv.className = 'message user-message';
+                userMessageDiv.textContent = message;
+                chatHistory.appendChild(userMessageDiv);
+                chatInput.value = '';
+                voiceIcon.style.display = 'block';
+                sendIcon.style.display = 'none';
+                chatHistory.scrollTop = chatHistory.scrollHeight;
+                saveChatHistory(user.uid, userMessage);
+
+                // 模擬 AI 回應（因 API 無效）
+                const aiResponse = "這是模擬回應，因為您的 API Key 無效。請提供有效 API 或後端代理服務。";
+                const aiMessage = { role: 'ai', content: aiResponse };
+                const aiMessageDiv = document.createElement('div');
+                aiMessageDiv.className = 'message ai-message';
+                aiMessageDiv.textContent = aiResponse;
+                chatHistory.appendChild(aiMessageDiv);
+                chatHistory.scrollTop = chatHistory.scrollHeight;
+                saveChatHistory(user.uid, aiMessage);
+
+                // 以下為原 API 調用（因無效已註釋）
+                /*
+                try {
+                    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': 'Bearer sk-OmWAEu21QORnmhSnCbC3XJrZPHrfCKV5srhyNP1YeVsOkEH1'
+                        },
+                        body: JSON.stringify({
+                            model: 'gpt-3.5-turbo',
+                            messages: [{ role: 'user', content: message }],
+                            max_tokens: 150
+                        })
+                    });
+
+                    if (!response.ok) throw new Error('API 請求失敗');
+                    const data = await response.json();
+                    const aiResponse = data.choices[0].message.content;
+
+                    const aiMessage = { role: 'ai', content: aiResponse };
+                    const aiMessageDiv = document.createElement('div');
+                    aiMessageDiv.className = 'message ai-message';
+                    aiMessageDiv.textContent = aiResponse;
+                    chatHistory.appendChild(aiMessageDiv);
+                    chatHistory.scrollTop = chatHistory.scrollHeight;
+                    saveChatHistory(user.uid, aiMessage);
+                } catch (error) {
+                    const errorMessage = { role: 'ai', content: '抱歉，無法連接到 AI：' + error.message };
+                    const errorMessageDiv = document.createElement('div');
+                    errorMessageDiv.className = 'message ai-message';
+                    errorMessageDiv.textContent = errorMessage.content;
+                    chatHistory.appendChild(errorMessageDiv);
+                    chatHistory.scrollTop = chatHistory.scrollHeight;
+                    saveChatHistory(user.uid, errorMessage);
+                }
+                */
+            }
         });
 
         function showSuccess(container, circular, callback) {
@@ -475,17 +743,6 @@
                 if (callback) callback();
                 else showPage(document.getElementById('loginContainer'));
             }, 2000);
-        }
-
-        const particleContainer = document.getElementById('particles');
-        for (let i = 0; i < 20; i++) {
-            const particle = document.createElement('div');
-            particle.className = 'particle';
-            particle.style.width = `${Math.random() * 10 + 5}px`;
-            particle.style.height = particle.style.width;
-            particle.style.left = `${Math.random() * 100}%`;
-            particle.style.animationDelay = `${Math.random() * 5}s`;
-            particleContainer.appendChild(particle);
         }
     </script>
 </body>
