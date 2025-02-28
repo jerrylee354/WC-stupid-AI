@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WC Stupid AI</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Roboto', sans-serif;
+            user-select: none;
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: radial-gradient(circle at center, #6750a4 0%, #f8bbd0 100%);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .container {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 100%;
+            max-width: 400px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .app-title {
+            color: white;
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 24px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            animation: slideIn 0.8s ease-in-out;
+        }
+
+        .form-container {
+            position: relative;
+            width: 100%;
+        }
+
+        .login-container, .register-container, .forgot-container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px); /* 增強模糊效果 */
+            padding: 24px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            opacity: 0;
+            position: relative;
+        }
+
+        .active {
+            display: flex;
+            animation: fadeIn 0.3s ease-in forwards;
+        }
+
+        .progress-container {
+            width: 100%;
+            margin-bottom: 16px;
+            display: none;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 4px;
+            background: rgba(103, 80, 164, 0.3);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .progress {
+            width: 0;
+            height: 100%;
+            background: #6750a4;
+            animation: progressAnimation 2s linear infinite;
+        }
+
+        .input-field {
+            margin-bottom: 16px;
+            position: relative;
+            width: 100%;
+        }
+
+        .input-field label {
+            position: absolute;
+            top: 50%;
+            left: 12px;
+            color: #1f1f1f;
+            font-size: 16px;
+            pointer-events: none;
+            transform: translateY(-50%);
+            transition: all 0.2s ease;
+            background: transparent;
+            padding: 0 4px;
+        }
+
+        .input-field input:focus + label,
+        .input-field input:not(:placeholder-shown) + label {
+            top: 0;
+            font-size: 12px;
+            color: #6750a4;
+            transform: translateY(-100%);
+        }
+
+        .input-field input {
+            width: 100%;
+            padding: 16px 12px 8px;
+            border: 1px solid #79747e;
+            border-radius: 4px;
+            font-size: 16px;
+            outline: none;
+            background: transparent;
+            color: #1f1f1f;
+            user-select: text;
+        }
+
+        .input-field input:focus {
+            border: 2px solid #6750a4;
+        }
+
+        .filled-button {
+            background: #6750a4;
+            color: white;
+            padding: 10px 24px;
+            border: none;
+            border-radius: 50px;
+            font-size: 14px;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            width: 100%;
+            position: relative;
+        }
+
+        .toggle-link, .forgot-password {
+            text-align: center;
+            margin-top: 12px;
+            color: #6750a4;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+
+        .toggle-link:hover, .forgot-password:hover {
+            color: #7b5bb8;
+        }
+
+        .error-message {
+            color: #d32f2f;
+            font-size: 12px;
+            text-align: center;
+            margin-top: 8px;
+            display: none;
+            animation: shake 0.5s ease-in-out;
+        }
+
+        .circular-progress-container {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 48px;
+            height: 48px;
+        }
+
+        .circular-progress {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 4px solid transparent;
+            border-top: 4px solid #6750a4;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        @keyframes progressAnimation {
+            0% { width: 0; }
+            50% { width: 100%; }
+            100% { width: 0; }
+        }
+
+        .particles {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+        }
+
+        .particle {
+            position: absolute;
+            background: rgba(103, 80, 164, 0.5);
+            border-radius: 50%;
+            animation: float 6s infinite ease-in-out;
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0); opacity: 0.8; }
+            50% { transform: translateY(-100vh); opacity: 0.2; }
+            100% { transform: translateY(0); opacity: 0.8; }
+        }
+
+        .form-content {
+            width: 100%;
+        }
+
+        .hide-content .form-content {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="particles" id="particles"></div>
+    <div class="container">
+        <h1 class="app-title">WC Stupid AI</h1>
+        <div class="form-container">
+            <!-- 登入表單 -->
+            <div class="login-container active" id="loginContainer">
+                <div class="progress-container" id="loginProgress">
+                    <div class="progress-bar"><div class="progress"></div></div>
+                </div>
+                <div class="form-content">
+                    <form id="loginForm">
+                        <div class="input-field">
+                            <input type="email" id="loginUsername" required placeholder=" ">
+                            <label for="loginUsername">電子郵件</label>
+                        </div>
+                        <div class="input-field">
+                            <input type="password" id="loginPassword" required placeholder=" ">
+                            <label for="loginPassword">密碼</label>
+                        </div>
+                        <button type="submit" class="filled-button">登入</button>
+                        <div class="error-message" id="loginError"></div>
+                        <div class="forgot-password" id="toForgot">忘記密碼？</div>
+                    </form>
+                    <div class="toggle-link" id="toRegister">還沒有帳號？註冊</div>
+                </div>
+                <div class="circular-progress-container" id="loginCircular">
+                    <div class="circular-progress"></div>
+                </div>
+            </div>
+
+            <!-- 註冊表單 -->
+            <div class="register-container" id="registerContainer">
+                <div class="progress-container" id="registerProgress">
+                    <div class="progress-bar"><div class="progress"></div></div>
+                </div>
+                <div class="form-content">
+                    <form id="registerForm">
+                        <div class="input-field">
+                            <input type="text" id="registerUsername" required placeholder=" ">
+                            <label for="registerUsername">使用者名稱</label>
+                        </div>
+                        <div class="input-field">
+                            <input type="email" id="registerEmail" required placeholder=" ">
+                            <label for="registerEmail">電子郵件</label>
+                        </div>
+                        <div class="input-field">
+                            <input type="password" id="registerPassword" required placeholder=" ">
+                            <label for="registerPassword">密碼</label>
+                        </div>
+                        <button type="submit" class="filled-button">註冊</button>
+                        <div class="error-message" id="registerError"></div>
+                    </form>
+                    <div class="toggle-link" id="toLogin">已有帳號？登入</div>
+                </div>
+                <div class="circular-progress-container" id="registerCircular">
+                    <div class="circular-progress"></div>
+                </div>
+            </div>
+
+            <!-- 忘記密碼表單 -->
+            <div class="forgot-container" id="forgotContainer">
+                <div class="progress-container" id="forgotProgress">
+                    <div class="progress-bar"><div class="progress"></div></div>
+                </div>
+                <div class="form-content">
+                    <form id="forgotForm">
+                        <div class="input-field">
+                            <input type="email" id="forgotEmail" required placeholder=" ">
+                            <label for="forgotEmail">電子郵件</label>
+                        </div>
+                        <button type="submit" class="filled-button">發送重置郵件</button>
+                        <div class="error-message" id="forgotError"></div>
+                    </form>
+                    <div class="toggle-link" id="backToLogin">返回登入</div>
+                </div>
+                <div class="circular-progress-container" id="forgotCircular">
+                    <div class="circular-progress"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-analytics.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAhWb3t_6TlUacScuXyoXKte1OoBwrjWLM",
+            authDomain: "wc-stupid-ai.firebaseapp.com",
+            projectId: "wc-stupid-ai",
+            storageBucket: "wc-stupid-ai.firebasestorage.app",
+            messagingSenderId: "518705763854",
+            appId: "1:518705763854:web:c296783f44729e64ac0e5f",
+            measurementId: "G-LE4RN5YRTV"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const analytics = getAnalytics(app);
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const loginForm = document.getElementById('loginForm');
+            const registerForm = document.getElementById('registerForm');
+            const forgotForm = document.getElementById('forgotForm');
+            const toRegister = document.getElementById('toRegister');
+            const toLogin = document.getElementById('toLogin');
+            const toForgot = document.getElementById('toForgot');
+            const backToLogin = document.getElementById('backToLogin');
+            const loginContainer = document.getElementById('loginContainer');
+            const registerContainer = document.getElementById('registerContainer');
+            const forgotContainer = document.getElementById('forgotContainer');
+            const loginProgress = document.getElementById('loginProgress');
+            const registerProgress = document.getElementById('registerProgress');
+            const forgotProgress = document.getElementById('forgotProgress');
+            const loginCircular = document.getElementById('loginCircular');
+            const registerCircular = document.getElementById('registerCircular');
+            const forgotCircular = document.getElementById('forgotCircular');
+
+            function showPage(showContainer) {
+                loginContainer.classList.remove('active', 'hide-content');
+                registerContainer.classList.remove('active', 'hide-content');
+                forgotContainer.classList.remove('active', 'hide-content');
+                showContainer.classList.add('active');
+            }
+
+            loginForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const email = document.getElementById('loginUsername').value;
+                const password = document.getElementById('loginPassword').value;
+                const errorMsg = document.getElementById('loginError');
+                loginProgress.style.display = 'block';
+
+                signInWithEmailAndPassword(auth, email, password)
+                    .then((userCredential) => {
+                        loginProgress.style.display = 'none';
+                        showSuccess(loginContainer, loginCircular, () => {
+                            window.location.href = 'dashboard.html';
+                        });
+                        errorMsg.style.display = 'none';
+                    })
+                    .catch((error) => {
+                        loginProgress.style.display = 'none';
+                        errorMsg.textContent = '登入失敗：' + error.message;
+                        errorMsg.style.display = 'block';
+                    });
+            });
+
+            registerForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const email = document.getElementById('registerEmail').value;
+                const password = document.getElementById('registerPassword').value;
+                const errorMsg = document.getElementById('registerError');
+                registerProgress.style.display = 'block';
+
+                createUserWithEmailAndPassword(auth, email, password)
+                    .then((userCredential) => {
+                        registerProgress.style.display = 'none';
+                        showSuccess(registerContainer, registerCircular);
+                        errorMsg.style.display = 'none';
+                    })
+                    .catch((error) => {
+                        registerProgress.style.display = 'none';
+                        errorMsg.textContent = '註冊失敗：' + error.message;
+                        errorMsg.style.display = 'block';
+                    });
+            });
+
+            forgotForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const email = document.getElementById('forgotEmail').value;
+                const errorMsg = document.getElementById('forgotError');
+                forgotProgress.style.display = 'block';
+
+                if (!email) {
+                    forgotProgress.style.display = 'none';
+                    errorMsg.textContent = '請輸入電子郵件';
+                    errorMsg.style.display = 'block';
+                    return;
+                }
+                sendPasswordResetEmail(auth, email)
+                    .then(() => {
+                        forgotProgress.style.display = 'none';
+                        showSuccess(forgotContainer, forgotCircular, () => {
+                            showPage(loginContainer);
+                        });
+                        errorMsg.style.display = 'none';
+                    })
+                    .catch((error) => {
+                        forgotProgress.style.display = 'none';
+                        errorMsg.textContent = '重置失敗：' + error.message;
+                        errorMsg.style.display = 'block';
+                    });
+            });
+
+            toRegister.addEventListener('click', () => {
+                showPage(registerContainer);
+                document.getElementById('loginError').style.display = 'none';
+            });
+
+            toLogin.addEventListener('click', () => {
+                showPage(loginContainer);
+                document.getElementById('registerError').style.display = 'none';
+            });
+
+            toForgot.addEventListener('click', () => {
+                showPage(forgotContainer);
+                document.getElementById('loginError').style.display = 'none';
+            });
+
+            backToLogin.addEventListener('click', () => {
+                showPage(loginContainer);
+                document.getElementById('forgotError').style.display = 'none';
+            });
+        });
+
+        function showSuccess(container, circular, callback) {
+            container.classList.add('hide-content');
+            circular.style.display = 'block';
+            setTimeout(() => {
+                circular.style.display = 'none';
+                container.classList.remove('hide-content');
+                document.getElementById('loginForm').reset();
+                document.getElementById('registerForm').reset();
+                document.getElementById('forgotForm').reset();
+                if (callback) callback();
+                else showPage(document.getElementById('loginContainer'));
+            }, 2000);
+        }
+
+        const particleContainer = document.getElementById('particles');
+        for (let i = 0; i < 20; i++) {
+            const particle = document.createElement('div');
+            particle.className = 'particle';
+            particle.style.width = `${Math.random() * 10 + 5}px`;
+            particle.style.height = particle.style.width;
+            particle.style.left = `${Math.random() * 100}%`;
+            particle.style.animationDelay = `${Math.random() * 5}s`;
+            particleContainer.appendChild(particle);
+        }
+    </script>
+</body>
+</html>
