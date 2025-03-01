@@ -1,0 +1,1106 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WC Stupid AI</title>
+    <style>
+        /* 保持原有的 CSS 不變 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Roboto', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: radial-gradient(circle at center, #6750a4 0%, #f8bbd0 100%);
+            overflow: hidden;
+            position: relative;
+            transition: background 0.5s ease;
+        }
+
+        body.light {
+            background: radial-gradient(circle at center, #f8bbd0 0%, #fff 100%);
+            color: #1f1f1f;
+        }
+
+        body.dark {
+            background: radial-gradient(circle at center, #6750a4 0%, #1f1f1f 100%);
+            color: #ffffff;
+        }
+
+        .container {
+            position: relative;
+            width: 100%;
+            max-width: 1200px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .app-title {
+            color: white;
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 24px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            animation: slideIn 0.8s ease-in-out;
+        }
+
+        .login-container, .register-container, .forgot-container, .ai-container, .settings-container, .welcome-container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            padding: 24px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            width: 100%;
+            max-width: 400px;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            opacity: 0;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            transition: opacity 0.3s ease-in-out, transform 0.5s ease;
+            z-index: 1002; /* 確保高於側邊欄 */
+        }
+
+        .login-container.active, .register-container.active, .forgot-container.active, .ai-container.active, .settings-container.active, .welcome-container.active {
+            display: flex;
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+            animation: fadeInScale 0.5s ease-in-out forwards;
+        }
+
+        .progress-container {
+            width: 100%;
+            margin-bottom: 16px;
+            display: none;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 4px;
+            background: rgba(103, 80, 164, 0.3);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .progress {
+            width: 0;
+            height: 100%;
+            background: #6750a4;
+            animation: progressAnimation 2s linear infinite;
+        }
+
+        .check-container {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 60px;
+            height: 60px;
+        }
+
+        .checkmark {
+            width: 100%;
+            height: 100%;
+            stroke: #6750a4;
+            stroke-width: 6;
+            stroke-linecap: round;
+            stroke-dasharray: 100;
+            stroke-dashoffset: 100;
+            animation: drawCheck 0.5s ease-in-out forwards;
+        }
+
+        @keyframes drawCheck {
+            to { stroke-dashoffset: 0; }
+        }
+
+        .input-field {
+            margin-bottom: 16px;
+            position: relative;
+            width: 100%;
+        }
+
+        .input-field label {
+            position: absolute;
+            top: 50%;
+            left: 12px;
+            color: #1f1f1f;
+            font-size: 16px;
+            pointer-events: none;
+            transform: translateY(-50%);
+            transition: all 0.2s ease;
+            background: transparent;
+            padding: 0 4px;
+        }
+
+        .input-field input:focus + label,
+        .input-field input:not(:placeholder-shown) + label {
+            top: 0;
+            font-size: 12px;
+            color: #6750a4;
+            transform: translateY(-100%);
+        }
+
+        .input-field input {
+            width: 100%;
+            padding: 16px 12px;
+            border: 1px solid #79747e;
+            border-radius: 24px;
+            font-size: 16px;
+            outline: none;
+            background: transparent;
+            color: #1f1f1f;
+            -webkit-user-select: text;
+            user-select: text;
+            pointer-events: auto;
+        }
+
+        .input-field input:focus {
+            border: 2px solid #6750a4;
+        }
+
+        .filled-button {
+            background: #6750a4;
+            color: white;
+            padding: 10px 24px;
+            border: none;
+            border-radius: 50px;
+            font-size: 14px;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            width: 100%;
+            transition: transform 0.3s ease, background 0.3s ease;
+            pointer-events: auto;
+            touch-action: manipulation;
+            position: relative;
+            z-index: 1003; /* 高於其他元素 */
+        }
+
+        .filled-button:hover {
+            transform: scale(1.05);
+            background: #7b5bb8;
+        }
+
+        .filled-button:active {
+            transform: scale(0.95);
+            background: #5e4b8f;
+        }
+
+        .toggle-link, .forgot-password {
+            text-align: center;
+            margin-top: 12px;
+            color: #6750a4;
+            cursor: pointer;
+            transition: color 0.3s;
+            pointer-events: auto;
+            touch-action: manipulation;
+        }
+
+        .toggle-link:hover, .forgot-password:hover {
+            color: #7b5bb8;
+        }
+
+        .error-message {
+            color: #d32f2f;
+            font-size: 12px;
+            text-align: center;
+            margin-top: 8px;
+            display: none;
+            animation: shake 0.5s ease-in-out;
+        }
+
+        .circular-progress-container {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 48px;
+            height: 48px;
+        }
+
+        .circular-progress {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 4px solid transparent;
+            border-top: 4px solid #6750a4;
+            animation: spin 1s linear infinite;
+        }
+
+        .form-content {
+            width: 100%;
+        }
+
+        .hide-content .form-content {
+            display: none;
+        }
+
+        /* AI 頁面 */
+        .ai-container {
+            max-width: 800px;
+            height: 80vh;
+            padding: 0;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+            animation: slideUp 0.7s ease-out;
+            display: flex;
+            flex-direction: column;
+            z-index: 1001;
+        }
+
+        .ai-main {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            position: relative;
+        }
+
+        .ai-settings-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 8px;
+            pointer-events: auto;
+            touch-action: manipulation;
+            z-index: 1003;
+        }
+
+        .ai-settings-icon {
+            width: 24px;
+            height: 24px;
+            fill: #6750a4;
+            transition: transform 0.3s ease;
+        }
+
+        .ai-settings-btn:hover .ai-settings-icon {
+            transform: rotate(90deg);
+        }
+
+        .ai-settings-btn:active .ai-settings-icon {
+            transform: scale(0.9);
+        }
+
+        .ai-chat {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background: #f5f5f5;
+        }
+
+        .ai-message {
+            margin-bottom: 16px;
+            padding: 12px 16px;
+            border-radius: 20px;
+            max-width: 70%;
+            animation: messagePop 0.4s ease-out;
+        }
+
+        .user-message {
+            background: #6750a4;
+            color: white;
+            align-self: flex-end;
+            margin-left: auto;
+        }
+
+        .bot-message {
+            background: #e5e5ea;
+            color: #1f1f1f;
+            align-self: flex-start;
+        }
+
+        .ai-input-container {
+            display: flex;
+            align-items: center;
+            padding: 16px;
+            border-top: 1px solid rgba(0, 0, 0, 0.1);
+            background: rgba(255, 255, 255, 0.9);
+        }
+
+        .ai-input {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 24px;
+            font-size: 16px;
+            outline: none;
+            transition: border 0.3s ease;
+            user-select: text;
+        }
+
+        .ai-input:focus {
+            border: 2px solid #6750a4;
+        }
+
+        .ai-send-btn {
+            background: #6750a4;
+            border: none;
+            padding: 12px;
+            border-radius: 50%;
+            margin-left: 12px;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+            pointer-events: auto;
+            touch-action: manipulation;
+        }
+
+        .ai-send-btn:hover {
+            transform: scale(1.1);
+        }
+
+        .ai-send-btn:active {
+            transform: scale(0.9);
+        }
+
+        .ai-send-icon {
+            width: 24px;
+            height: 24px;
+            fill: white;
+        }
+
+        /* 聊天記錄側邊欄 */
+        .ai-sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 300px;
+            height: 100%;
+            background: rgba(240, 240, 240, 0.85);
+            border-right: 1px solid rgba(0, 0, 0, 0.1);
+            padding: 16px;
+            overflow-y: auto;
+            z-index: 1000;
+            animation: slideInLeft 0.5s ease-out;
+        }
+
+        .ai-chat-list {
+            list-style: none;
+        }
+
+        .ai-chat-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            margin: 12px 0;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+            pointer-events: auto;
+        }
+
+        .ai-chat-item:hover {
+            background: rgba(103, 80, 164, 0.2);
+        }
+
+        .ai-chat-item.active {
+            background: #6750a4;
+            color: white;
+        }
+
+        .ai-chat-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .chat-action-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 4px;
+            pointer-events: auto;
+            touch-action: manipulation;
+        }
+
+        .chat-action-icon {
+            width: 16px;
+            height: 16px;
+            fill: #6750a4;
+            transition: fill 0.3s ease;
+        }
+
+        .chat-action-btn:hover .chat-action-icon {
+            fill: #7b5bb8;
+        }
+
+        .chat-action-btn:active .chat-action-icon {
+            fill: #5e4b8f;
+        }
+
+        .ai-new-chat {
+            padding: 12px;
+            background: #6750a4;
+            color: white;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+            pointer-events: auto;
+            touch-action: manipulation;
+        }
+
+        .ai-new-chat:hover {
+            transform: scale(1.05);
+        }
+
+        .ai-new-chat:active {
+            transform: scale(0.95);
+        }
+
+        /* 設定頁面 */
+        .settings-container {
+            max-width: 400px;
+            text-align: center;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 8px;
+            pointer-events: auto;
+            touch-action: manipulation;
+            z-index: 1003;
+        }
+
+        .close-icon {
+            width: 24px;
+            height: 24px;
+            fill: #6750a4;
+            transition: transform 0.3s ease;
+        }
+
+        .close-btn:hover .close-icon {
+            transform: rotate(90deg);
+        }
+
+        .close-btn:active .close-icon {
+            transform: scale(0.9);
+        }
+
+        .settings-option {
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0;
+            background: rgba(103, 80, 164, 0.1);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+            pointer-events: auto;
+            touch-action: manipulation;
+            z-index: 1003;
+        }
+
+        .settings-option:hover {
+            background: rgba(103, 80, 164, 0.3);
+        }
+
+        .settings-option:active {
+            background: rgba(103, 80, 164, 0.5);
+        }
+
+        /* 歡迎頁面 */
+        .welcome-text {
+            font-size: 24px;
+            text-align: center;
+            margin-bottom: 20px;
+            color: #1f1f1f;
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        .theme-options {
+            display: flex;
+            gap: 16px;
+            margin-top: 20px;
+        }
+
+        .theme-option {
+            padding: 12px 24px;
+            background: rgba(103, 80, 164, 0.2);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.3s ease, background 0.3s ease;
+            pointer-events: auto;
+            touch-action: manipulation;
+        }
+
+        .theme-option:hover {
+            transform: scale(1.05);
+            background: rgba(103, 80, 164, 0.4);
+        }
+
+        .theme-option:active {
+            transform: scale(0.95);
+        }
+
+        /* 動畫 */
+        @keyframes slideUp { from { transform: translate(-50%, -40%) scale(0.9); opacity: 0; } to { transform: translate(-50%, -50%) scale(1); opacity: 1; } }
+        @keyframes slideInLeft { from { transform: translateX(-100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        @keyframes fadeInScale { from { opacity: 0; transform: translate(-50%, -50%) scale(0.95); } to { opacity: 1; transform: translate(-50%, -50%) scale(1); } }
+        @keyframes messagePop { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+        @keyframes progressAnimation { 0% { width: 0; } 50% { width: 100%; } 100% { width: 0; } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="app-title">WC Stupid AI</h1>
+        <!-- 登入表單 -->
+        <div class="login-container active" id="loginContainer">
+            <div class="progress-container" id="loginProgress">
+                <div class="progress-bar"><div class="progress"></div></div>
+            </div>
+            <div class="form-content">
+                <h2 style="text-align: center; margin-bottom: 20px;">WC Stupid AI</h2>
+                <form id="loginForm">
+                    <div class="input-field">
+                        <input type="email" id="loginUsername" required placeholder=" " autocomplete="email">
+                        <label for="loginUsername">電子郵件</label>
+                    </div>
+                    <div class="input-field">
+                        <input type="password" id="loginPassword" required placeholder=" " autocomplete="current-password">
+                        <label for="loginPassword">密碼</label>
+                    </div>
+                    <button type="submit" class="filled-button">登入</button>
+                    <div class="error-message" id="loginError"></div>
+                    <div class="forgot-password" id="toForgot">忘記密碼？</div>
+                </form>
+                <div class="toggle-link" id="toRegister">還沒有帳號？註冊</div>
+            </div>
+            <div class="check-container" id="loginCheck">
+                <svg class="checkmark" viewBox="0 0 100 100">
+                    <path d="M20,50 L40,70 L80,30" fill="none" />
+                </svg>
+            </div>
+        </div>
+
+        <!-- 註冊表單 -->
+        <div class="register-container" id="registerContainer">
+            <div class="form-content">
+                <form id="registerForm">
+                    <div class="input-field">
+                        <input type="text" id="registerUsername" required placeholder=" ">
+                        <label for="registerUsername">使用者名稱</label>
+                    </div>
+                    <div class="input-field">
+                        <input type="email" id="registerEmail" required placeholder=" " autocomplete="email">
+                        <label for="registerEmail">電子郵件</label>
+                    </div>
+                    <div class="input-field">
+                        <input type="password" id="registerPassword" required placeholder=" " autocomplete="new-password">
+                        <label for="registerPassword">密碼</label>
+                    </div>
+                    <button type="submit" class="filled-button">註冊</button>
+                    <div class="error-message" id="registerError"></div>
+                </form>
+                <div class="toggle-link" id="toLogin">已有帳號？登入</div>
+            </div>
+            <div class="circular-progress-container" id="registerCircular">
+                <div class="circular-progress"></div>
+            </div>
+        </div>
+
+        <!-- 忘記密碼表單 -->
+        <div class="forgot-container" id="forgotContainer">
+            <div class="form-content">
+                <form id="forgotForm">
+                    <div class="input-field">
+                        <input type="email" id="forgotEmail" required placeholder=" " autocomplete="email">
+                        <label for="forgotEmail">電子郵件</label>
+                    </div>
+                    <button type="submit" class="filled-button">發送重置郵件</button>
+                    <div class="error-message" id="forgotError"></div>
+                </form>
+                <div class="toggle-link" id="backToLogin">返回登入</div>
+            </div>
+            <div class="circular-progress-container" id="forgotCircular">
+                <div class="circular-progress"></div>
+            </div>
+        </div>
+
+        <!-- 歡迎頁面 -->
+        <div class="welcome-container" id="welcomeContainer">
+            <div class="welcome-text" id="welcomeText">歡迎使用 WC Stupid AI！</div>
+            <button class="filled-button" id="startButton">開始使用</button>
+            <div class="theme-options" id="themeOptions" style="display: none;">
+                <div class="theme-option" data-theme="light">淺色主題</div>
+                <div class="theme-option" data-theme="dark">深色主題</div>
+            </div>
+        </div>
+
+        <!-- AI 頁面 -->
+        <div class="ai-container" id="aiContainer">
+            <div class="ai-main">
+                <button class="ai-settings-btn" id="settingsButton">
+                    <svg class="ai-settings-icon" viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.06-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.04.3-.06.62-.06.94s.02.64.06.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c-.12.22-.37.29-.59.22l-2.39-.96c-.5.38-1.03.7-1.62.94l-.36 2.54c-.05.24-.24.41-.48.41h-3.84c-.24 0-.44-.17-.47-.41l-.36-2.54c-.59-.24-1.13-.56-1.62-.94l-2.39.96c-.22.08-.47 0-.59-.22l-1.92-3.32c-.12-.22-.07-.47-.12-.61l-2.03-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+                </button>
+                <div class="ai-chat" id="chatHistory"></div>
+                <div class="ai-input-container">
+                    <input type="text" class="ai-input" id="chatInput" placeholder="輸入訊息...">
+                    <button class="ai-send-btn" id="sendButton">
+                        <svg class="ai-send-icon" viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 聊天記錄側邊欄 -->
+        <div class="ai-sidebar" id="aiSidebar" style="display: none;">
+            <div class="ai-new-chat" id="newChatButton">新增聊天</div>
+            <ul class="ai-chat-list" id="chatList"></ul>
+        </div>
+
+        <!-- 設定頁面 -->
+        <div class="settings-container" id="settingsContainer">
+            <button class="close-btn" id="closeSettings">
+                <svg class="close-icon" viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+            </button>
+            <h2 style="margin-bottom: 20px;">設定</h2>
+            <div class="settings-option" id="themeLight">淺色主題</div>
+            <div class="settings-option" id="themeDark">深色主題</div>
+            <button class="filled-button" id="logoutButton">登出</button>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, updateProfile, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-analytics.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAhWb3t_6TlUacScuXyoXKte1OoBwrjWLM",
+            authDomain: "wc-stupid-ai.firebaseapp.com",
+            projectId: "wc-stupid-ai",
+            storageBucket: "wc-stupid-ai.firebasestorage.app",
+            messagingSenderId: "518705763854",
+            appId: "1:518705763854:web:c296783f44729e64ac0e5f",
+            measurementId: "G-LE4RN5YRTV"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const analytics = getAnalytics(app);
+
+        const loginForm = document.getElementById('loginForm');
+        const registerForm = document.getElementById('registerForm');
+        const forgotForm = document.getElementById('forgotForm');
+        const toRegister = document.getElementById('toRegister');
+        const toLogin = document.getElementById('toLogin');
+        const toForgot = document.getElementById('toForgot');
+        const backToLogin = document.getElementById('backToLogin');
+        const loginContainer = document.getElementById('loginContainer');
+        const registerContainer = document.getElementById('registerContainer');
+        const forgotContainer = document.getElementById('forgotContainer');
+        const aiContainer = document.getElementById('aiContainer');
+        const settingsContainer = document.getElementById('settingsContainer');
+        const welcomeContainer = document.getElementById('welcomeContainer');
+        const loginProgress = document.getElementById('loginProgress');
+        const loginCheck = document.getElementById('loginCheck');
+        const registerCircular = document.getElementById('registerCircular');
+        const forgotCircular = document.getElementById('forgotCircular');
+        const chatInput = document.getElementById('chatInput');
+        const sendButton = document.getElementById('sendButton');
+        const chatHistory = document.getElementById('chatHistory');
+        const chatList = document.getElementById('chatList');
+        const newChatButton = document.getElementById('newChatButton');
+        const settingsButton = document.getElementById('settingsButton');
+        const closeSettings = document.getElementById('closeSettings');
+        const logoutButton = document.getElementById('logoutButton');
+        const themeLight = document.getElementById('themeLight');
+        const themeDark = document.getElementById('themeDark');
+        const startButton = document.getElementById('startButton');
+        const themeOptions = document.getElementById('themeOptions');
+        const welcomeText = document.getElementById('welcomeText');
+        const aiSidebar = document.getElementById('aiSidebar');
+
+        let currentChatIndex = 0;
+        let isFirstLogin = true;
+
+        function showPage(showContainer) {
+            loginContainer.classList.remove('active', 'hide-content');
+            registerContainer.classList.remove('active', 'hide-content');
+            forgotContainer.classList.remove('active', 'hide-content');
+            aiContainer.classList.remove('active');
+            settingsContainer.classList.remove('active');
+            welcomeContainer.classList.remove('active');
+            showContainer.classList.add('active');
+            if (showContainer === aiContainer) {
+                aiSidebar.style.display = 'block';
+            } else {
+                aiSidebar.style.display = 'none';
+            }
+        }
+
+        function applyTheme(theme) {
+            document.body.classList.remove('light', 'dark');
+            document.body.classList.add(theme);
+        }
+
+        function getGreeting() {
+            const hour = new Date().getHours();
+            if (hour < 12) return '早安';
+            if (hour < 18) return '午安';
+            return '晚安';
+        }
+
+        // 修改後的 chatGPTResponse 函數，使用你的 API Key
+        async function chatGPTResponse(message) {
+            const apiKey = 'sk-OmWAEu21QORnmhSnCbC3XJrZPHrfCKV5srhyNP1YeVsOkEH1';
+            const url = 'https://api.openai.com/v1/chat/completions';
+
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${apiKey}`
+                    },
+                    body: JSON.stringify({
+                        model: 'gpt-4o', // 使用 gpt-4o 模型
+                        messages: [
+                            { role: 'system', content: 'You are a helpful assistant.' }, // 加入 system 角色
+                            { role: 'user', content: message }
+                        ],
+                        max_tokens: 100,
+                        temperature: 0.7
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`API 請求失敗，狀態碼：${response.status}`);
+                }
+
+                const data = await response.json();
+                return data.choices[0].message.content.trim();
+            } catch (error) {
+                console.error('ChatGPT API 錯誤：', error);
+                return '抱歉，我無法連接到伺服器，請稍後再試！';
+            }
+        }
+
+        function generateChatName(history) {
+            if (history.length === 0) return "新聊天";
+            const firstMessage = history[0].content.toLowerCase();
+            if (firstMessage.includes("天氣")) return "天氣聊天";
+            if (firstMessage.includes("時間") || firstMessage.includes("幾點")) return "時間聊天";
+            if (firstMessage.includes("你好")) return "問候聊天";
+            return firstMessage.slice(0, 10) + "...";
+        }
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                const username = user.displayName || '用戶';
+                const storedTheme = localStorage.getItem(`theme_${user.uid}`) || 'light';
+                applyTheme(storedTheme);
+                const hasVisited = localStorage.getItem(`visited_${user.uid}`);
+                if (!hasVisited && isFirstLogin) {
+                    showPage(welcomeContainer);
+                    welcomeText.textContent = `歡迎使用 WC Stupid AI，${username}！`;
+                    isFirstLogin = false;
+                } else {
+                    showPage(aiContainer);
+                    loadChatList(user.uid);
+                    loadChatHistory(user.uid, currentChatIndex);
+                }
+            } else {
+                showPage(loginContainer);
+                chatHistory.innerHTML = '';
+                chatList.innerHTML = '';
+                isFirstLogin = true;
+            }
+        });
+
+        loginForm.addEventListener('submit', (e) => { e.preventDefault(); login(); });
+        registerForm.addEventListener('submit', (e) => { e.preventDefault(); register(); });
+        forgotForm.addEventListener('submit', (e) => { e.preventDefault(); forgot(); });
+
+        function login() {
+            const email = document.getElementById('loginUsername').value;
+            const password = document.getElementById('loginPassword').value;
+            const errorMsg = document.getElementById('loginError');
+            loginProgress.style.display = 'block';
+            signInWithEmailAndPassword(auth, email, password)
+                .then((userCredential) => {
+                    loginProgress.style.display = 'none';
+                    loginContainer.classList.add('hide-content');
+                    loginCheck.style.display = 'block';
+                    setTimeout(() => {
+                        loginCheck.style.display = 'none';
+                        loginContainer.classList.remove('hide-content');
+                        const hasVisited = localStorage.getItem(`visited_${userCredential.user.uid}`);
+                        if (!hasVisited) {
+                            showPage(welcomeContainer);
+                        } else {
+                            showPage(aiContainer);
+                        }
+                    }, 1000);
+                    errorMsg.style.display = 'none';
+                })
+                .catch((error) => {
+                    loginProgress.style.display = 'none';
+                    errorMsg.textContent = '登入失敗：' + error.message;
+                    errorMsg.style.display = 'block';
+                });
+        }
+
+        function register() {
+            const email = document.getElementById('registerEmail').value;
+            const password = document.getElementById('registerPassword').value;
+            const username = document.getElementById('registerUsername').value;
+            const errorMsg = document.getElementById('registerError');
+            createUserWithEmailAndPassword(auth, email, password)
+                .then((userCredential) => {
+                    return updateProfile(userCredential.user, { displayName: username }).then(() => {
+                        showSuccess(registerContainer, registerCircular, () => showPage(welcomeContainer));
+                        errorMsg.style.display = 'none';
+                    });
+                })
+                .catch((error) => {
+                    errorMsg.textContent = '註冊失敗：' + error.message;
+                    errorMsg.style.display = 'block';
+                });
+        }
+
+        function forgot() {
+            const email = document.getElementById('forgotEmail').value;
+            const errorMsg = document.getElementById('forgotError');
+            if (!email) {
+                errorMsg.textContent = '請輸入電子郵件';
+                errorMsg.style.display = 'block';
+                return;
+            }
+            sendPasswordResetEmail(auth, email)
+                .then(() => {
+                    showSuccess(forgotContainer, forgotCircular, () => showPage(loginContainer));
+                    errorMsg.style.display = 'none';
+                })
+                .catch((error) => {
+                    errorMsg.textContent = '重置失敗：' + error.message;
+                    errorMsg.style.display = 'block';
+                });
+        }
+
+        function addTouchSupport(element, callback) {
+            element.addEventListener('click', callback);
+            element.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                callback(e);
+            }, { passive: false });
+        }
+
+        addTouchSupport(toRegister, () => showPage(registerContainer));
+        addTouchSupport(toLogin, () => showPage(loginContainer));
+        addTouchSupport(toForgot, () => showPage(forgotContainer));
+        addTouchSupport(backToLogin, () => showPage(loginContainer));
+        addTouchSupport(settingsButton, () => showPage(settingsContainer));
+        addTouchSupport(closeSettings, () => showPage(aiContainer));
+        addTouchSupport(logoutButton, () => {
+            signOut(auth).then(() => {
+                showPage(loginContainer);
+                chatHistory.innerHTML = '';
+                chatList.innerHTML = '';
+            }).catch((error) => console.error('登出失敗：', error));
+        });
+        addTouchSupport(themeLight, () => {
+            const user = auth.currentUser;
+            if (user) {
+                applyTheme('light');
+                localStorage.setItem(`theme_${user.uid}`, 'light');
+            }
+        });
+        addTouchSupport(themeDark, () => {
+            const user = auth.currentUser;
+            if (user) {
+                applyTheme('dark');
+                localStorage.setItem(`theme_${user.uid}`, 'dark');
+            }
+        });
+        addTouchSupport(startButton, () => {
+            welcomeText.textContent = '請選擇您的主題';
+            startButton.style.display = 'none';
+            themeOptions.style.display = 'flex';
+        });
+        themeOptions.querySelectorAll('.theme-option').forEach(option => {
+            addTouchSupport(option, () => {
+                const theme = option.dataset.theme;
+                const user = auth.currentUser;
+                if (user) {
+                    applyTheme(theme);
+                    localStorage.setItem(`theme_${user.uid}`, theme);
+                    localStorage.setItem(`visited_${user.uid}`, 'true');
+                    showPage(aiContainer);
+                }
+            });
+        });
+        addTouchSupport(newChatButton, () => {
+            const user = auth.currentUser;
+            if (user) {
+                const chats = JSON.parse(localStorage.getItem(`chats_${user.uid}`)) || [];
+                const greeting = getGreeting();
+                const newChat = { id: Date.now(), history: [{ role: 'ai', content: `${greeting}，有什麼我可以幫您的？` }], name: "新聊天" };
+                chats.push(newChat);
+                currentChatIndex = chats.length - 1;
+                localStorage.setItem(`chats_${user.uid}`, JSON.stringify(chats));
+                loadChatList(user.uid);
+                loadChatHistory(user.uid, currentChatIndex);
+            }
+        });
+        addTouchSupport(sendButton, sendMessage);
+
+        function deleteChat(uid, index) {
+            const chats = JSON.parse(localStorage.getItem(`chats_${uid}`)) || [];
+            chats.splice(index, 1);
+            localStorage.setItem(`chats_${uid}`, JSON.stringify(chats));
+            if (index === currentChatIndex) {
+                currentChatIndex = chats.length > 0 ? 0 : -1;
+                loadChatHistory(uid, currentChatIndex);
+            } else if (index < currentChatIndex) {
+                currentChatIndex--;
+            }
+            loadChatList(uid);
+        }
+
+        function renameChat(uid, index) {
+            const chats = JSON.parse(localStorage.getItem(`chats_${uid}`)) || [];
+            const newName = prompt("請輸入新聊天名稱：", chats[index].name || generateChatName(chats[index].history));
+            if (newName) {
+                chats[index].name = newName;
+                localStorage.setItem(`chats_${uid}`, JSON.stringify(chats));
+                loadChatList(uid);
+            }
+        }
+
+        function loadChatList(uid) {
+            const chats = JSON.parse(localStorage.getItem(`chats_${uid}`)) || [];
+            chatList.innerHTML = '';
+            chats.forEach((chat, index) => {
+                const chatItem = document.createElement('li');
+                chatItem.className = 'ai-chat-item';
+                chatItem.innerHTML = `
+                    <span>${chat.name || generateChatName(chat.history)}</span>
+                    <div class="ai-chat-actions">
+                        <button class="chat-action-btn rename-btn">
+                            <svg class="chat-action-icon" viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
+                        </button>
+                        <button class="chat-action-btn delete-btn">
+                            <svg class="chat-action-icon" viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+                        </button>
+                    </div>
+                `;
+                if (index === currentChatIndex) chatItem.classList.add('active');
+                addTouchSupport(chatItem.querySelector('.rename-btn'), () => renameChat(uid, index));
+                addTouchSupport(chatItem.querySelector('.delete-btn'), () => deleteChat(uid, index));
+                addTouchSupport(chatItem, () => {
+                    currentChatIndex = index;
+                    loadChatList(uid);
+                    loadChatHistory(uid, index);
+                });
+                chatList.appendChild(chatItem);
+            });
+        }
+
+        function loadChatHistory(uid, chatIndex) {
+            const chats = JSON.parse(localStorage.getItem(`chats_${uid}`)) || [];
+            chatHistory.innerHTML = '';
+            if (chatIndex >= 0 && chats[chatIndex]) {
+                const history = chats[chatIndex].history;
+                history.forEach(msg => {
+                    const messageDiv = document.createElement('div');
+                    messageDiv.className = `ai-message ${msg.role === 'user' ? 'user-message' : 'bot-message'}`;
+                    messageDiv.textContent = msg.content;
+                    chatHistory.appendChild(messageDiv);
+                });
+                chatHistory.scrollTop = chatHistory.scrollHeight;
+            }
+        }
+
+        function saveChatHistory(uid, chatIndex, message) {
+            const chats = JSON.parse(localStorage.getItem(`chats_${uid}`)) || [];
+            if (!chats[chatIndex]) chats[chatIndex] = { id: Date.now(), history: [], name: "新聊天" };
+            chats[chatIndex].history.push(message);
+            localStorage.setItem(`chats_${uid}`, JSON.stringify(chats));
+            loadChatList(uid);
+        }
+
+        async function sendMessage() {
+            const user = auth.currentUser;
+            if (!user) {
+                alert('請先登入');
+                showPage(loginContainer);
+                return;
+            }
+
+            const message = chatInput.value.trim();
+            if (!message) return;
+
+            const userMessage = { role: 'user', content: message };
+            const userMessageDiv = document.createElement('div');
+            userMessageDiv.className = 'ai-message user-message';
+            userMessageDiv.textContent = message;
+            chatHistory.appendChild(userMessageDiv);
+            chatInput.value = '';
+            chatHistory.scrollTop = chatHistory.scrollHeight;
+            saveChatHistory(user.uid, currentChatIndex, userMessage);
+
+            const aiResponse = await chatGPTResponse(message);
+            const aiMessage = { role: 'ai', content: aiResponse };
+            const aiMessageDiv = document.createElement('div');
+            aiMessageDiv.className = 'ai-message bot-message';
+            aiMessageDiv.textContent = aiResponse;
+            setTimeout(() => {
+                chatHistory.appendChild(aiMessageDiv);
+                chatHistory.scrollTop = chatHistory.scrollHeight;
+                saveChatHistory(user.uid, currentChatIndex, aiMessage);
+            }, 500);
+        }
+
+        function showSuccess(container, circular, callback) {
+            container.classList.add('hide-content');
+            circular.style.display = 'block';
+            setTimeout(() => {
+                circular.style.display = 'none';
+                container.classList.remove('hide-content');
+                document.getElementById('loginForm')?.reset();
+                document.getElementById('registerForm')?.reset();
+                document.getElementById('forgotForm')?.reset();
+                if (callback) callback();
+                else showPage(loginContainer);
+            }, 2000);
+        }
+    </script>
+</body>
+</html>
